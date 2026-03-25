@@ -8,8 +8,9 @@ function StudyRooms() {
 
   // ✅ Initialize state from LocalStorage to keep it synced with Facilities.jsx
   const [streak, setStreak] = useState(parseInt(localStorage.getItem("streakCount") || "0"));
-  const [points, setPoints] = useState(parseInt(localStorage.getItem("userPoints") || "1250"));
+  const user = JSON.parse(localStorage.getItem("user"));
 
+const [points, setPoints] = useState(user?.points || 0);
   const rooms = [
     { name: "Room A", capacity: 4, type: "Solo Focus" },
     { name: "Room B", capacity: 6, type: "Group Project" },
@@ -27,27 +28,33 @@ function StudyRooms() {
   };
 
   // ✅ STREAK & POINT LOGIC (+1 Point)
-  const handleBooking = () => {
-    if (!selectedSlot) return;
+  function handleBooking() {
+  if (!selectedSlot) return;
 
-    const today = new Date().toLocaleDateString();
-    const lastUpdate = localStorage.getItem("lastStreakUpdate");
+  const today = new Date().toLocaleDateString();
+  const lastUpdate = localStorage.getItem("lastStreakUpdate");
 
-    // Show popup regardless (the user is still booking), but only award points if it's the first time today
-    setShowPopup(true);
+  setShowPopup(true);
 
-    if (lastUpdate !== today) {
-      const newPoints = points + 1; // Changed from +3 to +1
-      const newStreak = streak + 1;
+  if (lastUpdate !== today) {
+    const user = JSON.parse(localStorage.getItem("user"));
 
-      setPoints(newPoints);
-      setStreak(newStreak);
+    const newPoints = user.points + 1;
+    const newStreak = streak + 1;
 
-      localStorage.setItem("userPoints", newPoints);
-      localStorage.setItem("streakCount", newStreak);
-      localStorage.setItem("lastStreakUpdate", today);
-    }
-  };
+    const updatedUser = {
+      ...user,
+      points: newPoints
+    };
+
+    setPoints(newPoints);
+    setStreak(newStreak);
+
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    localStorage.setItem("streakCount", newStreak);
+    localStorage.setItem("lastStreakUpdate", today);
+  }
+}
 
   return (
     <DashboardLayout activePage="facilities" title="Study Space" subtitle="Boost your productivity by booking a dedicated zone.">
@@ -145,7 +152,7 @@ function StudyRooms() {
       {showPopup && (
         <div style={styles.modalOverlay} onClick={() => setShowPopup(false)}>
           <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <div style={styles.successIcon}>✅</div>
+            <div style={styles.successIcon}>Success</div>
             <h2 style={styles.modalTitle}>Spot Secured!</h2>
             <p style={styles.modalText}>You've successfully booked <strong>{selectedRoom}</strong> for <strong>{selectedSlot}</strong>.</p>
             

@@ -16,25 +16,29 @@ function Rewards() {
   ]
 
   useEffect(() => {
-    const savedPoints = parseInt(localStorage.getItem("userPoints") || "1250")
-    const savedStreak = parseInt(localStorage.getItem("streakCount") || "0")
-    setStreak(savedStreak)
+  const user = JSON.parse(localStorage.getItem("user"))
 
-    let start = 0
-    const duration = 1200 
-    const increment = Math.ceil(savedPoints / (duration / 10))
-    
-    const timer = setInterval(() => {
-      start += increment
-      if (start >= savedPoints) {
-        setDisplayPoints(savedPoints)
-        clearInterval(timer)
-      } else {
-        setDisplayPoints(start)
-      }
-    }, 10)
-    return () => clearInterval(timer)
-  }, [])
+  const savedPoints = user?.points || 0
+  const savedStreak = parseInt(localStorage.getItem("streakCount") || "0")
+
+  setStreak(savedStreak)
+
+  let start = 0
+  const duration = 1200
+  const increment = Math.ceil(savedPoints / (duration / 10))
+
+  const timer = setInterval(() => {
+    start += increment
+    if (start >= savedPoints) {
+      setDisplayPoints(savedPoints)
+      clearInterval(timer)
+    } else {
+      setDisplayPoints(start)
+    }
+  }, 10)
+
+  return () => clearInterval(timer)
+}, [])
 
   function generateVoucher(name) {
     const prefix = name.includes("Coffee") ? "COF" : "BRC"
@@ -42,18 +46,27 @@ function Rewards() {
   }
 
   function redeemReward(item) {
-    if (displayPoints < item.cost) {
-      alert("Not enough points!")
-      return
-    }
-    const voucherCode = generateVoucher(item.name)
-    const newTotal = displayPoints - item.cost
-    
-    setVoucher(voucherCode)
-    setRedeemedItem(item.id)
-    setDisplayPoints(newTotal)
-    localStorage.setItem("userPoints", newTotal)
+  if (displayPoints < item.cost) {
+    alert("Not enough points!")
+    return
   }
+
+  const voucherCode = generateVoucher(item.name)
+  const newTotal = displayPoints - item.cost
+
+  const user = JSON.parse(localStorage.getItem("user"))
+
+  const updatedUser = {
+    ...user,
+    points: newTotal
+  }
+
+  localStorage.setItem("user", JSON.stringify(updatedUser))
+
+  setVoucher(voucherCode)
+  setRedeemedItem(item.id)
+  setDisplayPoints(newTotal)
+}
 
   return (
     <DashboardLayout activePage="rewards" title="Student Rewards" subtitle="Redeem your points and track your consistency.">
