@@ -27,34 +27,48 @@ const [points, setPoints] = useState(user?.points || 0);
     "Room D": ["12-1"]
   };
 
-  // ✅ STREAK & POINT LOGIC (+1 Point)
-  function handleBooking() {
+  const handleBooking = async () => {
   if (!selectedSlot) return;
 
-  const today = new Date().toLocaleDateString();
-  const lastUpdate = localStorage.getItem("lastStreakUpdate");
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  setShowPopup(true);
+  try {
+    const res = await fetch("http://localhost:5000/api/bookings/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        user_id: user.user_id,
+        room_name: selectedRoom,
+        time_slot: selectedSlot
+      })
+    });
 
-  if (lastUpdate !== today) {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const data = await res.json();
 
-    const newPoints = user.points + 1;
-    const newStreak = streak + 1;
+    if (res.ok) {
+      alert(data.message);
 
-    const updatedUser = {
-      ...user,
-      points: newPoints
-    };
+      // 🔄 update local user points
+      const updatedUser = {
+        ...user,
+        points: user.points + 1
+      };
 
-    setPoints(newPoints);
-    setStreak(newStreak);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    localStorage.setItem("streakCount", newStreak);
-    localStorage.setItem("lastStreakUpdate", today);
+      setPoints(updatedUser.points);
+      setShowPopup(true);
+    } else {
+      alert(data.message);
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("Booking failed");
   }
-}
+};
 
   return (
     <DashboardLayout activePage="facilities" title="Study Space" subtitle="Boost your productivity by booking a dedicated zone.">
@@ -158,7 +172,7 @@ const [points, setPoints] = useState(user?.points || 0);
             
             <div style={styles.bonusBadge}>
                 {localStorage.getItem("lastStreakUpdate") === new Date().toLocaleDateString() 
-                ? "Streak Maintained 🔥" 
+                ? "Streak Maintained " 
                 : "+1 Point Earned"}
             </div>
 
