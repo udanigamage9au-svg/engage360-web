@@ -136,13 +136,7 @@ function Dashboard() {
             </div>
           </div>
 
-          <div style={styles.promoCard}>
-            <div style={styles.promoContent}>
-                <h4 style={styles.promoHeader}>Earn +5 Points</h4> {/* Points reduced as requested */}
-                <p style={styles.promoSub}>Attend the Tech Meetup at the Student Union today!</p>
-                <button style={styles.promoBtn} onClick={() => navigate("/rewards")}>Join Event</button>
-            </div>
-          </div>
+          
 
         </div>
       </div>
