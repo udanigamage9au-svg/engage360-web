@@ -52,7 +52,7 @@ router.post("/create", (req, res) => {
 
         db.query(updatePoints, [user_id]);
 
-        res.json({ message: "Booking successful +1 point 🎉" });
+        res.json({ message: "Booking successful +1 point " });
       });
     });
   });

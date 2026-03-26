@@ -17,31 +17,49 @@ const [showMap, setShowMap] = useState(false)
 
 // State for live UI update
 const [streak, setStreak] = useState(parseInt(localStorage.getItem("streakCount") || "0"))
-const [points, setPoints] = useState(parseInt(localStorage.getItem("userPoints") || "1250"))
+const user = JSON.parse(localStorage.getItem("user"))
 
-const updateStreak = (facilityName) => {
-    const today = new Date().toLocaleDateString();
-    const lastUpdate = localStorage.getItem("lastStreakUpdate");
+const [points, setPoints] = useState(user?.points || 0)
 
-    if (lastUpdate === today) {
-        alert(`Already checked in today! Streak maintained.`);
-        return;
-    }
+const handleCheckIn = (facilityName) => {
+  console.log("Clicked:", facilityName);
 
-    // 1. Update Points (+1 PT)
-    const newPoints = points + 1;
-    setPoints(newPoints);
-    localStorage.setItem("userPoints", newPoints);
+  const user = JSON.parse(localStorage.getItem("user"));
 
-    // 2. Update Streak Count
-    const newStreak = streak + 1;
-    setStreak(newStreak);
-    localStorage.setItem("streakCount", newStreak);
-    localStorage.setItem("lastStreakUpdate", today);
-    
-    alert(`🔥 +1 PT! Streak Updated via ${facilityName}.`);
-}
+  fetch("http://localhost:5000/api/checkin", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user_id: user.user_id,
+      facility_name: facilityName,
+    }),
+  })
+    .then((res) => {
+      console.log("Response received");
+      return res.json();
+    })
+    .then((data) => {
+      console.log("Backend data:", data);
+      alert(data.message);
 
+      // ✅ UPDATE POINTS
+      if (data.points) {
+        setPoints(data.points);
+
+        let updatedUser = { ...user, points: data.points };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+
+      // ✅ UPDATE STREAK
+      if (data.streak) {
+        setStreak(data.streak);
+        localStorage.setItem("streakCount", data.streak);
+      }
+    })
+    .catch((err) => console.error("ERROR:", err));
+};
 return(
 <DashboardLayout activePage="facilities" title="Campus Facilities" subtitle="Stay active on campus to earn rewards.">
 <div style={styles.page}>
@@ -71,13 +89,60 @@ return(
     </div>
 
     <div style={styles.grid}>
-        <FacilityCard img={stadiumImg} title="Stadium" status="Open" level="Moderate" path="/stadium" onCheckIn={() => updateStreak("Stadium")}/>
-        <FacilityCard img={gymImg} title="Gymnasium" status="Open" level="Moderate" path="/gymnasium" onCheckIn={() => updateStreak("Gymnasium")}/>
-        <FacilityCard img={libraryImg} title="University Library" status="Busy" level="Very Busy" path="/library" onCheckIn={() => updateStreak("Library")}/>
-        <FacilityCard img={labsImg} title="Labs" status="Open" level="Moderate" path="/labs" onCheckIn={() => updateStreak("Labs")}/>
-        <FacilityCard img={guidanceImg} title="Student Guidance Center" status="Open" level="Busy" path="/guidance" onCheckIn={() => updateStreak("Guidance Center")}/>
-        <FacilityCard img={mediaImg} title="Media Unit" status="Open" level="Moderate" path="/media-unit" onCheckIn={() => updateStreak("Media Unit")}/>
-    </div>
+  <FacilityCard 
+    img={stadiumImg} 
+    title="Stadium" 
+    status="Open" 
+    level="Moderate" 
+    path="/stadium" 
+    onCheckIn={() => handleCheckIn("Stadium")}
+  />
+
+  <FacilityCard 
+    img={gymImg} 
+    title="Gymnasium" 
+    status="Open" 
+    level="Moderate" 
+    path="/gymnasium" 
+    onCheckIn={() => handleCheckIn("Gymnasium")}
+  />
+
+  <FacilityCard 
+    img={libraryImg} 
+    title="University Library" 
+    status="Busy" 
+    level="Very Busy" 
+    path="/library" 
+    onCheckIn={() => handleCheckIn("Library")}
+  />
+
+  <FacilityCard 
+    img={labsImg} 
+    title="Labs" 
+    status="Open" 
+    level="Moderate" 
+    path="/labs" 
+    onCheckIn={() => handleCheckIn("Labs")}
+  />
+
+  <FacilityCard 
+    img={guidanceImg} 
+    title="Student Guidance Center" 
+    status="Open" 
+    level="Busy" 
+    path="/guidance" 
+    onCheckIn={() => handleCheckIn("Guidance Center")}
+  />
+
+  <FacilityCard 
+    img={mediaImg} 
+    title="Media Unit" 
+    status="Open" 
+    level="Moderate" 
+    path="/media-unit" 
+    onCheckIn={() => handleCheckIn("Media Unit")}
+  />
+</div>
 
     {/* STUDY ROOM POPUP */}
 

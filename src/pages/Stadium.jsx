@@ -88,16 +88,7 @@ function Stadium(){
               📍 Navigate
             </button>
 
-            {/* CHECK-IN BUTTON */}
-            <button
-              style={styles.checkBtn}
-              onClick={()=>{
-                console.log("Check-in clicked")
-                setPoints(prev => prev + 3)
-              }}
-            >
-              ✔ Check In (+3pts)
-            </button>
+            
 
             {/* SHOW POINTS */}
             <p style={{marginTop:"10px", fontWeight:"600"}}>

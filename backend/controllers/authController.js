@@ -3,17 +3,17 @@ const db = require("../config/db");
 exports.signup = (req, res) => {
   const { full_name, email, student_id, password, confirmPassword, role } = req.body;
 
-  // 🔒 Check if passwords match
+  // Check if passwords match
   if (password !== confirmPassword) {
     return res.status(400).json({ message: "Passwords do not match" });
   }
 
-  // 🎓 Check university email
+  // Check university email
   if (!email.endsWith("@stu.uni.edu")) {
     return res.status(400).json({ message: "Use university email (@stu.uni.edu)" });
   }
 
-  // 🔍 Check if user already exists
+  // Check if user already exists
   const checkUserQuery = "SELECT * FROM users WHERE email = ?";
 
   db.query(checkUserQuery, [email], (err, results) => {
@@ -23,7 +23,7 @@ exports.signup = (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // ✅ Insert new user
+    // Insert new user
     const insertQuery = `
       INSERT INTO users (full_name, email, student_id, password, role)
       VALUES (?, ?, ?, ?, ?)
@@ -41,11 +41,11 @@ exports.signup = (req, res) => {
   });
 };
 
-// ✅ LOGIN
+//  LOGIN
 exports.login = (req, res) => {
   const { email, password } = req.body;
 
-  // 🔍 Check user
+  // Check user
   const query = "SELECT * FROM users WHERE email = ? AND password = ?";
 
   db.query(query, [email, password], (err, results) => {
@@ -70,7 +70,7 @@ exports.login = (req, res) => {
   });
 };
 
-// ✅ GET ALL USERS (for testing)
+// GET ALL USERS (for testing)
 exports.getUsers = (req, res) => {
   const query = "SELECT * FROM users";
 

@@ -3,6 +3,7 @@ const router = express.Router();
 
 const authController = require("../controllers/authController");
 
+
 // TEST ROUTE (check API working)
 router.get("/", (req, res) => {
   res.send("Auth API working 🚀");

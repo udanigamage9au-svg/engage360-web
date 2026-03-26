@@ -18,23 +18,18 @@ function Explore() {
     <DashboardLayout 
       activePage="explore" 
       title="Explore Campus" 
-      subtitle="Discover CINEC's facilities and events."
+      subtitle="Discover Your Uni through Maps, Events and Premium Features!"
     >
       <div style={styles.container}>
         
-        {/* 🔥 NEW FEATURE: GLOWING STUDY ROOM BANNER */}
+        {/* NEW FEATURE: GLOWING STUDY ROOM BANNER */}
         <div style={styles.featuredGlowCard}>
           <div style={styles.glowOverlay} />
           <div style={styles.featuredContent}>
             <div style={styles.newTag}>NEW FEATURE</div>
-            <h2 style={styles.featuredTitle}>📚 Premium Study Spaces</h2>
+            <h2 style={styles.featuredTitle}> Premium Study Spaces</h2>
             <p style={styles.featuredSubtitle}>Book high-speed Wi-Fi zones and maintain your daily streak!</p>
-            
-            <div style={styles.statsRow}>
-              <div style={styles.miniStat}>🔥 <b>3 Day</b> Streak</div>
-              <div style={styles.statDivider} />
-              <div style={styles.miniStat}>⭐ <b>120</b> Points</div>
-            </div>
+          
 
             <button style={styles.featuredButton} onClick={() => navigate("/studyrooms")}>
               Reserve a Spot Now

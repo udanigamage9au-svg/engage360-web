@@ -112,15 +112,7 @@ onClick={()=>{
 📍 Navigate
 </button>
 
-<button
-style={styles.checkBtn}
-onClick={()=>{
-  console.log("Check-in clicked")
-  setPoints(prev => prev + 3)
-}}
->
-✔ Check In (+3pts)
-</button>
+
 
 <p style={{marginTop:"10px", fontWeight:"600"}}>
 Points: {points}

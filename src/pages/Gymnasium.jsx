@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import { useState } from "react" // ✅ THIS WAS MISSING
+import { useState } from "react" 
 import DashboardLayout from "./DashboardLayout"
 
 import uniMap from "../assets/uniMap.png"
@@ -97,12 +97,7 @@ onClick={()=>setShowMap(true)}
 📍 Navigate
 </button>
 
-<button
-style={styles.checkBtn}
-onClick={()=>setPoints(prev => prev + 3)}
->
-✔ Check In (+3pts)
-</button>
+
 
 <p style={{marginTop:"10px", fontWeight:"600"}}>
 Points: {points}
