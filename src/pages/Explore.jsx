@@ -22,7 +22,7 @@ function Explore() {
     >
       <div style={styles.container}>
         
-        {/* 🔥 NEW FEATURE: GLOWING STUDY ROOM BANNER */}
+        {/*  NEW FEATURE: GLOWING STUDY ROOM BANNER */}
         <div style={styles.featuredGlowCard}>
           <div style={styles.glowOverlay} />
           <div style={styles.featuredContent}>
