@@ -39,7 +39,7 @@ const updateStreak = (facilityName) => {
     localStorage.setItem("streakCount", newStreak);
     localStorage.setItem("lastStreakUpdate", today);
     
-    alert(`🔥 +1 PT! Streak Updated via ${facilityName}.`);
+    alert(`+1 PT! Streak Updated via ${facilityName}.`);
 }
 
 return(
