@@ -6,8 +6,25 @@ function AdminLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [notifModal, setNotifModal] = useState(false);
+  const [notifMsg, setNotifMsg] = useState("");
+  const [notifSending, setNotifSending] = useState(false);
 
   const isActive = (path) => location.pathname === path;
+  const sendNotification = async () => {
+  if (!notifMsg.trim()) return alert("Enter a message");
+  setNotifSending(true);
+  const res = await fetch("http://localhost:5000/api/notifications/send-all", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: notifMsg }),
+  });
+  const data = await res.json();
+  setNotifSending(false);
+  setNotifMsg("");
+  setNotifModal(false);
+  alert(`Notification sent to ${data.sent} students!`);
+};
 
   // Modern Navigation Items Array for cleaner mapping
   const navItems = [
@@ -15,7 +32,7 @@ function AdminLayout({ children }) {
   { name: "Clubs", path: "/admin/clubs", icon: "👥" },
   { name: "Announcement", path: "/admin/announcements", icon: "📢" },
   { name: "System Updates", path: "/admin/system-updates", icon: "📇" },
-  { name: "Research", path: "/admin/research", icon: "📄" }, // ✅ MUST EXIST
+  { name: "Research", path: "/admin/research", icon: "📄" },
 ];
 
   return (
@@ -87,17 +104,45 @@ function AdminLayout({ children }) {
       {/* ================= MAIN CONTENT ================= */}
       <div style={styles.main}>
         
-        {/* ENHANCED TOP BAR */}
-        <header style={styles.topBar}>
-          <div style={styles.breadcrumb}>
-             <span style={{opacity: 0.5}}>Platform</span> / 
-             <span style={{fontWeight: 600, color: "#3f479b"}}> {location.pathname.split('/').pop().replace('-', ' ')}</span>
-          </div>
-          <div style={styles.topBarRight}>
-             <span style={styles.statusIndicator}>● System Online</span>
-          </div>
-        </header>
+       <header style={styles.topBar}>
+  <div style={styles.breadcrumb}>
+    <span style={{ opacity: 0.5 }}>Platform</span> /
+    <span style={{ fontWeight: 600, color: "#3f479b" }}>
+      {" "}{location.pathname.split("/").pop().replace("-", " ")}
+    </span>
+  </div>
+  <div style={styles.topBarRight}>
+    <span style={styles.statusIndicator}>● System Online</span>
+    <button style={styles.notifBtn} onClick={() => setNotifModal(true)}>
+      🔔 Send Notification
+    </button>
+  </div>
+</header>
 
+{/* NOTIFICATION SEND MODAL */}
+{notifModal && (
+  <div style={styles.modalOverlay}>
+    <div style={styles.modalBox}>
+      <h3 style={{ marginBottom: "6px" }}>🔔 Send Notification</h3>
+      <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "16px" }}>
+        This will be sent to all students in real time.
+      </p>
+      <textarea
+        style={styles.notifTextarea}
+        placeholder="Type your message..."
+        value={notifMsg}
+        onChange={(e) => setNotifMsg(e.target.value)}
+        rows={4}
+      />
+      <div style={styles.modalActions}>
+        <button style={styles.confirmBtn} onClick={sendNotification} disabled={notifSending}>
+          {notifSending ? "Sending..." : "Send to All Students"}
+        </button>
+        <button style={styles.cancelBtn} onClick={() => setNotifModal(false)}>Cancel</button>
+      </div>
+    </div>
+  </div>
+)}
         {/* PAGE CONTENT */}
         <main style={styles.content}>
           <div style={styles.innerContent}>
@@ -118,6 +163,31 @@ const styles = {
     fontFamily: "'Inter', 'Segoe UI', sans-serif",
   },
 
+  notifBtn: {
+  marginLeft: "16px",
+  background: "#fbbf24",
+  border: "none",
+  padding: "8px 16px",
+  borderRadius: "8px",
+  fontWeight: "600",
+  fontSize: "13px",
+  cursor: "pointer",
+},
+notifTextarea: {
+  width: "100%",
+  padding: "12px",
+  borderRadius: "8px",
+  border: "1px solid #e2e8f0",
+  fontSize: "14px",
+  resize: "vertical",
+  boxSizing: "border-box",
+  marginBottom: "16px",
+},
+topBarRight: {
+  display: "flex",
+  alignItems: "center",
+},
+ 
   /* SIDEBAR */
   sidebar: {
     width: "260px",

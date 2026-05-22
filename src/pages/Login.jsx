@@ -50,10 +50,10 @@ function Login() {
       return;
     }
 
-    // ✅ Store user in localStorage
+    // Store user in localStorage
     localStorage.setItem("user", JSON.stringify(data.user));
 
-    // ✅ Redirect based on role
+    // Redirect based on role
     if (data.user.role === "admin") {
       navigate("/admin-dashboard");
     } else {
@@ -160,7 +160,7 @@ function Login() {
 
 export default Login
 
-// ✅ STYLES (NO ERRORS)
+// STYLES (NO ERRORS)
 const styles = {
   page: {
     width: "100%",

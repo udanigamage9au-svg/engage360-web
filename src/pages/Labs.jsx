@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import DashboardLayout from "./DashboardLayout"
-import { useState } from "react" // ✅ FIX
+import { useState } from "react" 
 
 import labsImg from "../assets/labs.jpg"
 import uniMap from "../assets/uniMap.png"
@@ -113,9 +113,6 @@ function Labs() {
 
         </div>
 
-        <div style={styles.footer}>
-          © 2026 Engage360, All rights reserved
-        </div>
 
       </div>
 

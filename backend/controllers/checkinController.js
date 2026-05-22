@@ -5,7 +5,7 @@ exports.checkInFacility = (req, res) => {
 
   const today = new Date().toISOString().split("T")[0];
 
-  // 1. Check how many check-ins today
+  //  Check how many check-ins today
   const checkTodayQuery = `
     SELECT COUNT(*) AS count 
     FROM checkins 
@@ -15,14 +15,14 @@ exports.checkInFacility = (req, res) => {
   db.query(checkTodayQuery, [user_id, today], (err, results) => {
     if (err) return res.status(500).json(err);
 
-    // ❌ Limit reached
+    // Limit reached
     if (results[0].count >= 2) {
       return res.status(400).json({
         message: "Daily limit reached (2 check-ins)"
       });
     }
 
-    // 2. Insert check-in
+    //  Insert check-in
     const insertQuery = `
       INSERT INTO checkins (user_id, facility_name, checkin_date)
       VALUES (?, ?, ?)
@@ -48,7 +48,7 @@ exports.checkInFacility = (req, res) => {
         yesterday.setDate(yesterday.getDate() - 1);
         const yDate = yesterday.toISOString().split("T")[0];
 
-        // 🔥 Streak logic
+        // Streak logic
         if (lastDate === yDate) {
           streak += 1;
         } else if (lastDate !== today) {
@@ -76,7 +76,7 @@ exports.checkInFacility = (req, res) => {
             return res.json({
               message: "Check-in successful",
               streak,
-              points: result[0].points // ✅ THIS FIXES YOUR ISSUE
+              points: result[0].points 
             });
           });
         });

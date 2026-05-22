@@ -6,7 +6,7 @@ const authController = require("../controllers/authController");
 
 // TEST ROUTE (check API working)
 router.get("/", (req, res) => {
-  res.send("Auth API working 🚀");
+  res.send("Auth API working ");
 });
 
 // GET ALL USERS (testing/debug)

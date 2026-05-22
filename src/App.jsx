@@ -9,8 +9,8 @@ import Help from "./pages/Help"
 import ContactSupport from "./pages/ContactSupport.jsx"
 import ReportIssue from "./pages/ReportIssue"
 import Dashboard from "./pages/Dashboard"
-import Profile from "./pages/Profile"
-import Settings from "./pages/Settings"
+import Profile from "./pages/profile"
+import Settings from "./pages/settings"
 
 import Facilities from "./pages/Facilities"
 import Gymnasium from "./pages/Gymnasium"
@@ -21,7 +21,7 @@ import Guidance from "./pages/Guidance"
 import MediaUnit from "./pages/MediaUnit"
 import Transit from "./pages/transit"
 import StudyRooms from "./pages/StudyRooms"
-import Explore from "./pages/Explore"
+import Explore from "./pages/explore"
 import ClubDetails from "./pages/ClubDetails"
 
 import AdminDashboard from "./pages/admin/AdminDashboard"
@@ -30,14 +30,14 @@ import AdminAnnouncements from "./pages/admin/AdminAnnouncements"
 import AdminSystemUpdates from "./pages/admin/AdminSystemUpdates"
 import AdminProfile from "./pages/admin/AdminProfile"
 
-// ✅ FIXED IMPORTS
+//  FIXED IMPORTS
 import ResearchHub from "./pages/research/ResearchHub"
 import EthicsService from "./pages/research/EthicsService"
 import ResearchGuidance from "./pages/research/ResearchGuidance"
-import ResearchCouncil from "./pages/research/ResearchCouncil"
+import ResearchCouncil from "./pages/research/Researchcouncil"
 import ResearchOpportunities from "./pages/research/ResearchOpportunities"
 
-import Clubs from "./pages/Clubs"
+import Clubs from "./pages/clubs"
 import Rewards from "./pages/Rewards"
 import DriverTracker from "./pages/DriverTracker"
 import AdminResearch from "./pages/admin/AdminResearch";

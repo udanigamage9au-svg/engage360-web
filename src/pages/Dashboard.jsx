@@ -109,7 +109,7 @@ function Dashboard() {
               <p style={styles.cardDesc}>Shuttle bus location is updated in real-time.</p> 
               <button 
                 style={styles.trackLiveBtn} // New blue styling for Track Live
-                onClick={() => navigate("/transit")} // Now functional
+                onClick={() => navigate("/transit")} 
               >
                 Track Now
               </button>

@@ -1,6 +1,6 @@
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { useEffect, useState } from "react";
-import L from "leaflet"; // 🔥 This line fixes the "L is not defined" error
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { db } from "../firebase";
 import { ref, onValue } from "firebase/database";
@@ -26,42 +26,76 @@ const endIcon = new L.Icon({
   iconAnchor: [14, 28]
 });
 
+// This component lives INSIDE MapContainer so it can access the map instance
+function FlyToLocation({ position }) {
+  const map = useMap();
+  useEffect(() => {
+    if (position) {
+      map.flyTo(position, 15); // zoom 15 = street level
+    }
+  }, [position]);
+  return null;
+}
+
 function BusTracker() {
-  const [busPosition, setBusPosition] = useState([6.915556, 79.959544]);
+  const [busPosition, setBusPosition] = useState(null); // null until Firebase loads
 
   useEffect(() => {
     const busRef = ref(db, "bus/location");
-    onValue(busRef, (snapshot) => {
+    const unsubscribe = onValue(busRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) {
+      if (data && data.lat && data.lng) {
         setBusPosition([data.lat, data.lng]);
       }
     });
+    return () => unsubscribe(); // cleanup listener on unmount
   }, []);
 
   return (
-    <MapContainer
-      center={[6.98, 80.02]}
-      zoom={11}
-      style={{ height: "450px", width: "100%", borderRadius: "14px" }}
-    >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    <div>
+      {/* Status bar above the map */}
+      <div style={{
+        padding: "10px 16px",
+        marginBottom: "10px",
+        borderRadius: "10px",
+        background: busPosition ? "#dcfce7" : "#fef9c3",
+        color: busPosition ? "#166534" : "#854d0e",
+        fontWeight: "600",
+        fontSize: "14px"
+      }}>
+        {busPosition
+          ? `🚌 Bus is LIVE — ${busPosition[0].toFixed(5)}, ${busPosition[1].toFixed(5)}`
+          : "⏳ Waiting for bus location..."}
+      </div>
 
-      {/* Start Location */}
-      <Marker position={[7.0873, 79.9992]} icon={startIcon}>
-        <Popup>📍 Gampaha Bus Station</Popup>
-      </Marker>
+      <MapContainer
+        center={[7.0035, 79.9897]} // center of the route (between Gampaha and Malabe)
+        zoom={12}
+        style={{ height: "450px", width: "100%", borderRadius: "14px" }}
+      >
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      {/* End Location */}
-      <Marker position={[6.915556, 79.959544]} icon={endIcon}>
-        <Popup>📍 CINEC Campus Malabe</Popup>
-      </Marker>
+        {/* Auto-fly to bus position when it updates */}
+        {busPosition && <FlyToLocation position={busPosition} />}
 
-      {/* Live Bus */}
-      <Marker position={busPosition} icon={busIcon}>
-        <Popup>🚌 Campus Shuttle</Popup>
-      </Marker>
-    </MapContainer>
+        {/* Start Location */}
+        <Marker position={[7.0873, 79.9992]} icon={startIcon}>
+          <Popup>📍 Gampaha Bus Station</Popup>
+        </Marker>
+
+        {/* End Location */}
+        <Marker position={[6.915556, 79.959544]} icon={endIcon}>
+          <Popup>📍 CINEC Campus Malabe</Popup>
+        </Marker>
+
+        {/* Live Bus — only show when position is loaded from Firebase */}
+        {busPosition && (
+          <Marker position={busPosition} icon={busIcon}>
+            <Popup>🚌 Campus Shuttle — Live Location</Popup>
+          </Marker>
+        )}
+      </MapContainer>
+    </div>
   );
 }
 

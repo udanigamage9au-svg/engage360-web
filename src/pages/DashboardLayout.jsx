@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 
 // Asset Imports
 import logo from "../assets/logo.png";
@@ -13,23 +14,77 @@ import settingsIcon from "../assets/settings.png";
 import transitIcon from "../assets/transit.png";
 import logoutIcon from "../assets/logout.png";
 import notificationIcon from "../assets/notification.png";
-import researchIcon from "../assets/research.jpg"; 
+import researchIcon from "../assets/research.jpg";
+
+const SOCKET_URL = "http://localhost:5000";
 
 const DashboardLayout = ({ activePage, title, subtitle, children }) => {
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  
-  const [notifications] = useState([
-    "Welcome to the Engage360 Platform!",
-    "New Club event: Tech Workshop at 5 PM",
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const socketRef = useRef(null);
 
-  // 🔥 HANDLE LOGOUT LOGIC
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user_id = user?.user_id;
+
+  // Load existing notifications from DB
+  useEffect(() => {
+    if (!user_id) return;
+
+    fetch(`http://localhost:5000/api/notifications/${user_id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setNotifications(data);
+          setUnreadCount(data.filter((n) => !n.is_read).length);
+        }
+      })
+      .catch(() => {});
+  }, [user_id]);
+
+  // Connect Socket.io
+  useEffect(() => {
+    if (!user_id) return;
+
+    socketRef.current = io(SOCKET_URL);
+
+    socketRef.current.on("connect", () => {
+      socketRef.current.emit("register", user_id);
+    });
+
+    socketRef.current.on("new_notification", (notification) => {
+      setNotifications((prev) => [
+        { ...notification, is_read: false, id: Date.now() },
+        ...prev,
+      ]);
+      setUnreadCount((prev) => prev + 1);
+    });
+
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, [user_id]);
+
+  const handleOpenNotifications = () => {
+    setShowNotifications(true);
+    // Mark as read
+    if (unreadCount > 0 && user_id) {
+      fetch(`http://localhost:5000/api/notifications/mark-read/${user_id}`, {
+        method: "PUT",
+      }).then(() => {
+        setUnreadCount(0);
+        setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      });
+    }
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem("user"); // Clear session data
-    setShowLogoutModal(false);       // Close modal
-    navigate("/login");              // Redirect to login page
+    socketRef.current?.disconnect();
+    localStorage.removeItem("user");
+    setShowLogoutModal(false);
+    navigate("/login");
   };
 
   const navItems = [
@@ -37,7 +92,7 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
     { key: "explore", label: "Explore", icon: searchIcon, path: "/explore" },
     { key: "facilities", label: "Facilities", icon: facilitiesIcon, path: "/facilities" },
     { key: "clubs", label: "Clubs", icon: clubsIcon, path: "/clubs" },
-    { key: "research", label: "Research Hub", icon: researchIcon, path: "/research" }, 
+    { key: "research", label: "Research Hub", icon: researchIcon, path: "/research" },
     { key: "rewards", label: "Rewards", icon: rewardsIcon, path: "/rewards" },
     { key: "transit", label: "Transit & Navigation", icon: transitIcon, path: "/transit" },
     { key: "profile", label: "Profile", icon: profileIcon, path: "/profile" },
@@ -51,10 +106,7 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
   return (
     <div style={styles.page}>
       {showNotifications && (
-        <div 
-          style={styles.notificationOverlay} 
-          onClick={() => setShowNotifications(false)} 
-        />
+        <div style={styles.notificationOverlay} onClick={() => setShowNotifications(false)} />
       )}
 
       {/* Visual Decor */}
@@ -62,9 +114,8 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
       <div style={styles.yellowGlowRight} />
       <div style={styles.blueGlowBottom} />
       <div style={styles.yellowGlowLeft} />
-
-      {[styles.p1, styles.p2, styles.p3, styles.p4, styles.p5, styles.p6, styles.p7, styles.p8].map((p, i) => (
-        <span key={i} style={{ ...styles.particle, ...p }} />
+      {[styles.p1,styles.p2,styles.p3,styles.p4,styles.p5,styles.p6,styles.p7,styles.p8].map((p,i)=>(
+        <span key={i} style={{...styles.particle,...p}}/>
       ))}
 
       <header style={styles.topbar}>
@@ -79,27 +130,15 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
         <nav style={styles.sidebar}>
           <div style={styles.navGroup}>
             {navItems.map((item) => (
-              <SidebarItem
-                key={item.key}
-                icon={item.icon}
-                label={item.label}
-                active={activePage === item.key}
-                onClick={() => navigate(item.path)}
-              />
+              <SidebarItem key={item.key} icon={item.icon} label={item.label}
+                active={activePage === item.key} onClick={() => navigate(item.path)} />
             ))}
           </div>
           <div style={styles.sidebarDivider} />
           <div style={styles.navGroup}>
             {bottomItems.map((item) => (
-              <SidebarItem
-                key={item.key}
-                icon={item.icon}
-                label={item.label}
-                onClick={() => {
-                  if (item.key === "logout") setShowLogoutModal(true);
-                  else navigate(item.path);
-                }}
-              />
+              <SidebarItem key={item.key} icon={item.icon} label={item.label}
+                onClick={() => { if (item.key === "logout") setShowLogoutModal(true); else navigate(item.path); }} />
             ))}
           </div>
         </nav>
@@ -111,30 +150,44 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
               <p style={styles.subtitle}>{subtitle}</p>
             </div>
 
+            {/* NOTIFICATION BELL */}
             <div style={styles.notificationWrapper}>
-              <div 
-                style={{
-                  ...styles.notificationBox, 
-                  zIndex: showNotifications ? 10001 : 1001 
-                }} 
-                onClick={() => setShowNotifications(!showNotifications)}
-              >
+              <div style={{ ...styles.notificationBox, zIndex: showNotifications ? 10001 : 1001 }}
+                onClick={handleOpenNotifications}>
                 <img src={notificationIcon} alt="notifications" style={styles.notificationIcon} />
-                {notifications.length > 0 && <span style={styles.redDot} />}
+                {unreadCount > 0 && (
+                  <span style={styles.redBadge}>
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </div>
 
               {showNotifications && (
                 <div style={styles.notificationPopup}>
                   <div style={styles.notificationHeader}>
-                    <span style={{ fontWeight: "bold" }}>Notifications</span>
-                    <button style={styles.notificationClose} onClick={() => setShowNotifications(false)}>✕</button>
+                    <span style={{ fontWeight: "bold" }}>
+                      🔔 Notifications
+                      {unreadCount > 0 && (
+                        <span style={styles.popupBadge}>{unreadCount} new</span>
+                      )}
+                    </span>
+                    <button style={styles.notificationClose}
+                      onClick={() => setShowNotifications(false)}>✕</button>
                   </div>
                   <div style={styles.notificationList}>
                     {notifications.length === 0 ? (
-                      <p style={styles.emptyText}>No new notifications</p>
+                      <p style={styles.emptyText}>No notifications yet</p>
                     ) : (
                       notifications.map((note, index) => (
-                        <div key={index} style={styles.notificationItem}>{note}</div>
+                        <div key={note.id || index}
+                          style={{ ...styles.notificationItem, background: note.is_read ? "#fff" : "#eff6ff" }}>
+                          <p style={{ margin: 0, fontSize: "13px", color: "#334155" }}>
+                            {note.message}
+                          </p>
+                          <span style={styles.noteTime}>
+                            {new Date(note.created_at).toLocaleString()}
+                          </span>
+                        </div>
                       ))
                     )}
                   </div>
@@ -143,13 +196,9 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
             </div>
           </div>
 
-          <div style={styles.content}>
-            {children}
-          </div>
+          <div style={styles.content}>{children}</div>
 
-          <footer style={styles.footer}>
-            © 2026 Engage360, All rights reserved
-          </footer>
+          <footer style={styles.footer}>© 2026 Engage360, All rights reserved</footer>
         </main>
       </div>
 
@@ -159,7 +208,6 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
             <div style={styles.modalIcon}>❓</div>
             <h2 style={styles.modalTitle}>Do you want to log out?</h2>
             <div style={styles.modalButtons}>
-              {/* ✅ UPDATED BUTTON TO USE handleLogout */}
               <button style={styles.modalPrimary} onClick={handleLogout}>Yes, Logout</button>
               <button style={styles.modalSecondary} onClick={() => setShowLogoutModal(false)}>Cancel</button>
             </div>
@@ -170,15 +218,8 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
   );
 };
 
-// Sub-components
 const SidebarItem = ({ icon, label, active, onClick }) => (
-  <div
-    onClick={onClick}
-    style={{
-      ...styles.sidebarItem,
-      ...(active ? styles.sidebarItemActive : {}),
-    }}
-  >
+  <div onClick={onClick} style={{ ...styles.sidebarItem, ...(active ? styles.sidebarItemActive : {}) }}>
     <div style={styles.iconBox}>
       <img src={icon} style={styles.iconImg} alt={label} />
     </div>
@@ -193,147 +234,46 @@ const ModalOverlay = ({ children, onClose }) => (
 );
 
 const styles = {
-  page: {
-    position: "relative",
-    width: "100%",
-    height: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-    fontFamily: "'Inter', sans-serif",
-    background: "linear-gradient(135deg,#f8fbff 0%,#f4f7fc 48%,#fffdf8 100%)",
-  },
-  notificationOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(0, 0, 0, 0.3)", 
-    zIndex: 10000, 
-    backdropFilter: "blur(2px)",
-  },
-  topbar: {
-    height: "80px",
-    background: "white",
-    display: "flex",
-    alignItems: "center",
-    padding: "0 24px",
-    borderBottom: "1px solid #e5e7eb",
-    zIndex: 1000, 
-  },
+  page: { position: "relative", width: "100%", height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "'Inter', sans-serif", background: "linear-gradient(135deg,#f8fbff 0%,#f4f7fc 48%,#fffdf8 100%)" },
+  notificationOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.3)", zIndex: 10000, backdropFilter: "blur(2px)" },
+  topbar: { height: "80px", background: "white", display: "flex", alignItems: "center", padding: "0 24px", borderBottom: "1px solid #e5e7eb", zIndex: 1000 },
   brandSection: { display: "flex", alignItems: "center", gap: "14px" },
   logo: { width: "160px", objectFit: "contain" },
   divider: { width: "1px", height: "36px", background: "#cbd5e1" },
   platformText: { color: "#334155", fontSize: "15px", fontWeight: "500" },
   body: { flex: 1, display: "flex", overflow: "hidden" },
-  sidebar: {
-    width: "260px",
-    background: "#295fb8",
-    color: "white",
-    padding: "20px 12px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    zIndex: 5,
-  },
+  sidebar: { width: "260px", background: "#295fb8", color: "white", padding: "20px 12px", display: "flex", flexDirection: "column", justifyContent: "space-between", zIndex: 5 },
   navGroup: { display: "flex", flexDirection: "column", gap: "6px" },
-  sidebarItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    padding: "12px",
-    borderRadius: "12px",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  },
+  sidebarItem: { display: "flex", alignItems: "center", gap: "12px", padding: "12px", borderRadius: "12px", cursor: "pointer", transition: "all 0.2s ease" },
   sidebarItemActive: { background: "#3f86ff", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" },
-  iconBox: {
-    width: "32px",
-    height: "32px",
-    background: "rgba(255,255,255,0.15)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "8px",
-  },
+  iconBox: { width: "32px", height: "32px", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "8px" },
   iconImg: { width: "18px", height: "18px" },
   sidebarDivider: { borderTop: "1px solid rgba(255,255,255,0.2)", margin: "15px 10px" },
   main: { flex: 1, padding: "30px", overflowY: "auto", position: "relative" },
-  headerContainer: {
-    marginBottom: "24px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
+  headerContainer: { marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
   title: { fontSize: "36px", fontWeight: "800", color: "#1e293b", margin: 0 },
   subtitle: { fontSize: "16px", color: "#64748b", marginTop: "4px", fontStyle: "italic" },
   notificationWrapper: { position: "relative" },
-  notificationBox: {
-    background: "white",
-    padding: "10px",
-    borderRadius: "50%",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    border: "1px solid #f1f5f9",
-    position: "relative",
-  },
+  notificationBox: { background: "white", padding: "10px", borderRadius: "50%", boxShadow: "0 2px 8px rgba(0,0,0,0.05)", cursor: "pointer", display: "flex", alignItems: "center", border: "1px solid #f1f5f9", position: "relative" },
   notificationIcon: { width: "24px" },
-  redDot: {
-    position: "absolute",
-    top: "2px",
-    right: "2px",
-    width: "10px",
-    height: "10px",
-    background: "#ef4444",
-    borderRadius: "50%",
-    border: "2px solid white",
-  },
-  notificationPopup: {
-    position: "absolute",
-    top: "50px",
-    right: "0",
-    width: "280px",
-    background: "white",
-    borderRadius: "16px",
-    padding: "16px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-    border: "1px solid #e5e7eb",
-    zIndex: 10001, 
-  },
-  notificationHeader: { display: "flex", justifyContent: "space-between", marginBottom: "12px" },
-  notificationClose: { border: "none", background: "none", cursor: "pointer", color: "#94a3b8" },
-  notificationList: { display: "flex", flexDirection: "column", gap: "10px" },
-  notificationItem: { padding: "8px", fontSize: "13px", borderBottom: "1px solid #f1f5f9", color: "#334155" },
-  emptyText: { textAlign: "center", fontSize: "13px", color: "#94a3b8" },
+  redBadge: { position: "absolute", top: "-4px", right: "-4px", minWidth: "18px", height: "18px", background: "#ef4444", borderRadius: "10px", border: "2px solid white", fontSize: "10px", fontWeight: "700", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px" },
+  notificationPopup: { position: "absolute", top: "50px", right: "0", width: "320px", background: "white", borderRadius: "16px", padding: "16px", boxShadow: "0 10px 30px rgba(0,0,0,0.2)", border: "1px solid #e5e7eb", zIndex: 10001, maxHeight: "400px", overflowY: "auto" },
+  notificationHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" },
+  popupBadge: { marginLeft: "8px", background: "#ef4444", color: "#fff", fontSize: "10px", padding: "2px 7px", borderRadius: "10px", fontWeight: "700" },
+  notificationClose: { border: "none", background: "none", cursor: "pointer", color: "#94a3b8", fontSize: "16px" },
+  notificationList: { display: "flex", flexDirection: "column", gap: "8px" },
+  notificationItem: { padding: "10px 12px", borderRadius: "10px", border: "1px solid #f1f5f9" },
+  noteTime: { fontSize: "11px", color: "#94a3b8", marginTop: "4px", display: "block" },
+  emptyText: { textAlign: "center", fontSize: "13px", color: "#94a3b8", padding: "20px 0" },
   content: { minHeight: "70vh" },
   footer: { textAlign: "center", padding: "40px 0 20px", fontSize: "12px", color: "#94a3b8" },
-  modalOverlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(15, 23, 42, 0.5)",
-    backdropFilter: "blur(4px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 2000,
-  },
-  modalCard: {
-    background: "white",
-    padding: "40px",
-    borderRadius: "24px",
-    width: "400px",
-    textAlign: "center",
-    boxShadow: "0 20px 50px rgba(0,0,0,0.2)",
-  },
+  modalOverlay: { position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 },
+  modalCard: { background: "white", padding: "40px", borderRadius: "24px", width: "400px", textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,0.2)" },
   modalIcon: { fontSize: "48px", marginBottom: "10px" },
   modalTitle: { fontSize: "20px", fontWeight: "700", color: "#1e293b" },
   modalButtons: { display: "flex", gap: "12px", marginTop: "30px" },
   modalPrimary: { flex: 1, padding: "12px", background: "#2f6edb", color: "white", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "600" },
   modalSecondary: { flex: 1, padding: "12px", background: "#f1f5f9", color: "#475569", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "600" },
-
   blueGlowTop: { position: "absolute", top: "-100px", left: "-100px", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)", zIndex: 0 },
   yellowGlowRight: { position: "absolute", top: "20%", right: "-100px", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(250,204,21,0.1) 0%, transparent 70%)", zIndex: 0 },
   blueGlowBottom: { position: "absolute", bottom: "-100px", left: "20%", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)", zIndex: 0 },

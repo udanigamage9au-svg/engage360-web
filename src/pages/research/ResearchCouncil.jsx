@@ -1,12 +1,16 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import DashboardLayout from "../DashboardLayout";
 
 const ResearchCouncil = () => {
-  const councilMembers = [
-    { name: "Prof. Neelakshi C. Premawardhena", role: "Chairperson", dept: "Linguistics", interest: "Applied Linguistics, Multi-lingualism" },
-    { name: "Dr. Thilina Pathirage", role: "Member", dept: "Computing", interest: "AI, Machine Learning, Data Science" },
-    { name: "Prof. Kapila Seneviratne", role: "Member", dept: "Science", interest: "Biochemistry, Molecular Biology" },
-  ];
+  const [councilMembers, setCouncilMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/research/council")
+      .then((r) => r.json())
+      .then((data) => { setCouncilMembers(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
 
   return (
     <DashboardLayout activePage="research" title="Research Council" subtitle="The Governing Body of University Research">
@@ -16,18 +20,23 @@ const ResearchCouncil = () => {
           <p>The University Research Council (URC) oversees ethical standards, grant approvals, and research quality across all faculties at the University of Kelaniya.</p>
         </div>
 
-        <div style={styles.grid}>
-          {councilMembers.map((member, index) => (
-            <div key={index} style={styles.memberCard}>
-              <div style={styles.avatar}>{member.name.charAt(0)}</div>
-              <h4 style={styles.name}>{member.name}</h4>
-              <p style={styles.role}>{member.role}</p>
-              <div style={styles.deptBadge}>{member.dept}</div>
-              <p style={styles.interest}><strong>Focus:</strong> {member.interest}</p>
-              <button style={styles.contactBtn}>View Profile</button>
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <p style={{ color: "#94a3b8" }}>Loading council members...</p>
+        ) : councilMembers.length === 0 ? (
+          <p style={{ color: "#94a3b8" }}>No council members listed yet.</p>
+        ) : (
+          <div style={styles.grid}>
+            {councilMembers.map((member) => (
+              <div key={member.id} style={styles.memberCard}>
+                <div style={styles.avatar}>{member.name.charAt(0)}</div>
+                <h4 style={styles.name}>{member.name}</h4>
+                <p style={styles.role}>{member.role}</p>
+                <div style={styles.deptBadge}>{member.department}</div>
+                <p style={styles.interest}><strong>Focus:</strong> {member.interests}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
@@ -43,7 +52,6 @@ const styles = {
   role: { fontSize: "13px", color: "#64748b", marginBottom: "10px" },
   deptBadge: { display: "inline-block", padding: "4px 12px", background: "#f1f5f9", borderRadius: "20px", fontSize: "11px", fontWeight: "600", color: "#475569", marginBottom: "10px" },
   interest: { fontSize: "12px", color: "#64748b", lineHeight: "1.4" },
-  contactBtn: { marginTop: "15px", width: "100%", padding: "8px", border: "1px solid #e2e8f0", background: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }
 };
 
 export default ResearchCouncil;
