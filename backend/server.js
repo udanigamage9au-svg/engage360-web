@@ -19,6 +19,10 @@ app.use(express.json());
 
 require("./config/db");
 
+const helmet = require("helmet");
+app.use(helmet());
+app.disable("x-powered-by");
+
 // ROUTES
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
@@ -34,6 +38,9 @@ app.use("/api/research", researchRoutes);
 
 const notificationRoutes = require("./routes/notificationRoutes");
 app.use("/api/notifications", notificationRoutes);
+
+const announcementRoutes = require("./routes/announcementRoutes"); // ← NEW
+app.use("/api/announcements", announcementRoutes);                 // ← NEW
 
 // SOCKET.IO
 io.on("connection", (socket) => {

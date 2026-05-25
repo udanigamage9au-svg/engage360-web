@@ -11,6 +11,7 @@ import ReportIssue from "./pages/ReportIssue"
 import Dashboard from "./pages/Dashboard"
 import Profile from "./pages/profile"
 import Settings from "./pages/settings"
+import Announcements from "./pages/Announcements"
 
 import Facilities from "./pages/Facilities"
 import Gymnasium from "./pages/Gymnasium"
@@ -77,6 +78,7 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/explore" element={<Explore />} />
         <Route path="/studyrooms" element={<StudyRooms />} />
+        <Route path="/announcements" element={<Announcements />} />
 
         {/* ADMIN */}
         <Route path="/admin-dashboard" element={<AdminDashboard />} />

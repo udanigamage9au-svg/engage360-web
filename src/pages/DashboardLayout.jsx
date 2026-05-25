@@ -15,6 +15,7 @@ import transitIcon from "../assets/transit.png";
 import logoutIcon from "../assets/logout.png";
 import notificationIcon from "../assets/notification.png";
 import researchIcon from "../assets/research.jpg";
+import announcementsIcon from "../assets/megaphone.jpg"; // ✅ NEW
 
 const SOCKET_URL = "http://localhost:5000";
 
@@ -32,7 +33,6 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
   // Load existing notifications from DB
   useEffect(() => {
     if (!user_id) return;
-
     fetch(`http://localhost:5000/api/notifications/${user_id}`)
       .then((r) => r.json())
       .then((data) => {
@@ -47,13 +47,10 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
   // Connect Socket.io
   useEffect(() => {
     if (!user_id) return;
-
     socketRef.current = io(SOCKET_URL);
-
     socketRef.current.on("connect", () => {
       socketRef.current.emit("register", user_id);
     });
-
     socketRef.current.on("new_notification", (notification) => {
       setNotifications((prev) => [
         { ...notification, is_read: false, id: Date.now() },
@@ -61,7 +58,6 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
       ]);
       setUnreadCount((prev) => prev + 1);
     });
-
     return () => {
       socketRef.current?.disconnect();
     };
@@ -69,7 +65,6 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
 
   const handleOpenNotifications = () => {
     setShowNotifications(true);
-    // Mark as read
     if (unreadCount > 0 && user_id) {
       fetch(`http://localhost:5000/api/notifications/mark-read/${user_id}`, {
         method: "PUT",
@@ -93,6 +88,7 @@ const DashboardLayout = ({ activePage, title, subtitle, children }) => {
     { key: "facilities", label: "Facilities", icon: facilitiesIcon, path: "/facilities" },
     { key: "clubs", label: "Clubs", icon: clubsIcon, path: "/clubs" },
     { key: "research", label: "Research Hub", icon: researchIcon, path: "/research" },
+    { key: "announcements", label: "Announcements", icon: announcementsIcon, path: "/announcements" }, // ✅ NEW
     { key: "rewards", label: "Rewards", icon: rewardsIcon, path: "/rewards" },
     { key: "transit", label: "Transit & Navigation", icon: transitIcon, path: "/transit" },
     { key: "profile", label: "Profile", icon: profileIcon, path: "/profile" },
@@ -242,7 +238,7 @@ const styles = {
   divider: { width: "1px", height: "36px", background: "#cbd5e1" },
   platformText: { color: "#334155", fontSize: "15px", fontWeight: "500" },
   body: { flex: 1, display: "flex", overflow: "hidden" },
-  sidebar: { width: "260px", background: "#295fb8", color: "white", padding: "20px 12px", display: "flex", flexDirection: "column", justifyContent: "space-between", zIndex: 5 },
+  sidebar: { width: "260px", background: "#295fb8", color: "white", padding: "20px 12px", display: "flex", flexDirection: "column", justifyContent: "space-between", zIndex: 5, overflowY: "auto" },
   navGroup: { display: "flex", flexDirection: "column", gap: "6px" },
   sidebarItem: { display: "flex", alignItems: "center", gap: "12px", padding: "12px", borderRadius: "12px", cursor: "pointer", transition: "all 0.2s ease" },
   sidebarItemActive: { background: "#3f86ff", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" },
